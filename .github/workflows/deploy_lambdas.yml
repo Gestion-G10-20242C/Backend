@@ -21,7 +21,7 @@ jobs:
       run: |
         PY_MODIFIED="no" 
 
-        if git diff --name-only --diff-filter=AM ${{ github.event.before }} ${{ github.sha }} | grep -q '^lambda-functions/[^/]*/.*\.py'; then
+        if git diff --name-only --diff-filter=AM ${{ github.event.before }} ${{ github.sha }} | grep -q '^lambda_functions/[^/]*/.*\.py'; then
           PY_MODIFIED="yes"
         fi
         
@@ -40,8 +40,8 @@ jobs:
     - name: Deploy Python Lambda functions
       if: env.PY_MODIFIED == 'yes'
       run: |
-        cd lambda-functions/
-        PYTHON_LAMBDA_DIRS=$(git diff --name-only --diff-filter=AM ${{ github.event.before }} ${{ github.sha }} | grep '^lambda-functions/[^/]*/.*\.py' | awk -F/ '{ print $2 }' | sort -u)
+        cd lambda_functions/
+        PYTHON_LAMBDA_DIRS=$(git diff --name-only --diff-filter=AM ${{ github.event.before }} ${{ github.sha }} | grep '^lambda_functions/[^/]*/.*\.py' | awk -F/ '{ print $2 }' | sort -u)
         for FUNCTION_NAME in $PYTHON_LAMBDA_DIRS; do
           echo "Deploying Python Lambda: $FUNCTION_NAME..."
           cd $FUNCTION_NAME
