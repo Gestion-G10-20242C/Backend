@@ -12,7 +12,6 @@ def lambda_handler(event, context):
     password = event['password']
     
     try:
-        # Autenticar al usuario con el flujo USER_PASSWORD_AUTH
         response = cognito_client.initiate_auth(
             AuthFlow='USER_PASSWORD_AUTH',
             AuthParameters={
@@ -22,10 +21,7 @@ def lambda_handler(event, context):
             ClientId=CLIENT_ID
         )
         
-        # Extraer los tokens de la respuesta
-        id_token = response['AuthenticationResult']['IdToken']
         access_token = response['AuthenticationResult']['AccessToken']
-        refresh_token = response['AuthenticationResult']['RefreshToken']
         
         return {
             'statusCode': 200,
