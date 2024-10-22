@@ -1,8 +1,12 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from mangum import Mangum
 
 # FastAPI app
 app = FastAPI()
+
+# Adaptación para lambda
+handler = Mangum(app)
 
 # Mocked temp vars
 mocked_description = "Hola! Mi nombre es Carlos Fontela, soy un desarrollador de software amante de las metodologías ágiles."
