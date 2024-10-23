@@ -1,4 +1,7 @@
 import json
+import boto3
+
+dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
 def lambda_handler(event, context):
     # print(event)
@@ -6,7 +9,26 @@ def lambda_handler(event, context):
     body = json.loads(event['body'])
     name = body['name']
     print(f"Received username: {username}, name: {name}")
-    # Acá se insertaría a la bdd
+
+    # Inserto a la bdd de perfiles
+    response = dynamodb_client.put_item(
+        TableName='UserProfiles',
+        Item={
+            'username': {
+                'S': username
+            },
+            'name': {
+                'S': name
+            }
+        }
+    )
+    # Checkeo que haya funcionado el insert
+    status_code = response['ResponseMetadata']['HTTPStatusCode']
+    if status_code != 200:
+        return {
+            'statusCode': 400,
+            'body': json.dumps('Error')
+    }
 
     return {
         'statusCode': 200,
