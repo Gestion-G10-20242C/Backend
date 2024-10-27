@@ -4,6 +4,19 @@ from boto3.dynamodb.types import TypeDeserializer
 
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
+"""
+Lambda function to retrieve a user profile from a DynamoDB table.
+Parameters:
+event (dict): The event dictionary containing request parameters.
+    - pathParameters (dict): Dictionary containing path parameters.
+        - username (str): The username of the user profile to retrieve.
+Returns:
+dict: A dictionary containing the HTTP status code and the response body.
+    - statusCode (int): The HTTP status code of the response.
+    - body (str): The JSON-encoded response body.
+        - On success: JSON-encoded user profile.
+        - On failure: JSON-encoded error message.
+"""
 def lambda_handler(event, context):
     username = event['pathParameters']['username']
     print(username)

@@ -3,6 +3,19 @@ import boto3
 
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
+"""
+Lambda function to handle user profile creation.
+This function extracts the username from the path parameters and the user profile details from the request body.
+It then inserts the user profile into the 'UserProfiles' DynamoDB table.
+Parameters:
+event (dict): The event dictionary containing request data.
+    - pathParameters (dict): Contains the 'username' key.
+    - body (str): JSON string containing the user profile details.
+Returns:
+dict: A dictionary containing the status code and response body.
+    - statusCode (int): HTTP status code indicating the result of the operation.
+    - body (str): JSON string containing the response message.
+"""
 def lambda_handler(event, context):
     username = event['pathParameters']['username']
     body = json.loads(event['body'])

@@ -3,6 +3,17 @@ import boto3
 
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
+"""
+Lambda function to update a user profile in the DynamoDB table given a proxy request.
+Parameters:
+event (dict): The event dictionary containing the request data. Expected to have:
+    - 'pathParameters' (dict): Contains the 'username' key.
+    - 'body' (str): A JSON string representing the body of the request.
+Returns:
+dict: A dictionary containing the HTTP status code and the body of the response.
+    - 'statusCode' (int): The HTTP status code of the response.
+    - 'body' (str): A JSON string representing the updated user profile or an error message.
+"""
 def lambda_handler(event, context):
     username = event['pathParameters']['username']
     body = json.loads(event['body'])
