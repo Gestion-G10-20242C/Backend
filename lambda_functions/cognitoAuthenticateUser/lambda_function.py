@@ -21,14 +21,16 @@ def lambda_handler(event, context):
             ClientId=CLIENT_ID
         )
         
+        id_token = response['AuthenticationResult']['IdToken']
         access_token = response['AuthenticationResult']['AccessToken']
+        refresh_token = response['AuthenticationResult']['RefreshToken']
         
         return {
             'statusCode': 200,
             'body': json.dumps({
                 'message': 'Authentication successful!',
                 'username':username,
-                'access_token': access_token
+                'access_token': id_token
             })
         }
     
