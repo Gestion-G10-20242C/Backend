@@ -5,8 +5,9 @@ from boto3.dynamodb.types import TypeDeserializer
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
 def lambda_handler(event, context):
-    username = event['username']
-    user_following = event['following']
+    username = event['pathParameters']['username']
+    user_following = event['pathParameters']['username_following']
+
 
     response = dynamodb_client.get_item(
         TableName='Follows',

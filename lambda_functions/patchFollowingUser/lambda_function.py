@@ -4,9 +4,8 @@ import boto3
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
 def lambda_handler(event, context):
-
-    username = event['username']
-    user_following = event['following']
+    username = event['pathParameters']['username']
+    user_following = event['pathParameters']['username_following']
     active = event['active']
 
     response = dynamodb_client.update_item(
