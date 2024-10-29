@@ -6,7 +6,13 @@ dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 def lambda_handler(event, context):
     username = event['pathParameters']['username']
     user_following = event['pathParameters']['username_following']
-    active = event['active']
+    active = json.loads(event['body']).get('active')
+    
+    if active is None:
+        return {
+            'statusCode': 400,
+            'body': json.dumps('Error')
+        }
 
     response = dynamodb_client.update_item(
         TableName='Follows',
