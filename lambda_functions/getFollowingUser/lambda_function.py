@@ -24,7 +24,7 @@ def lambda_handler(event, context):
     item = response.get('Item', {})
     if not item:
         return {
-            'statusCode': 404,
+            'statusCode': 200,
             'body': json.dumps({'usernme': username, 'following': user_following, 'active': False})
         }
 
