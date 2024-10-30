@@ -52,6 +52,11 @@ def lambda_handler(event, context):
     updated_profile = {k: v['S'] if 'S' in v else v['N'] for k, v in response['Attributes'].items()}
     return {
         'statusCode': 200,
+        'headers': {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Methods': 'OPTIONS, PATCH'
+        },
         'body': json.dumps(updated_profile)
     }
 
