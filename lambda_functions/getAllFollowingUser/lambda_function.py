@@ -31,5 +31,10 @@ def lambda_handler(event, context):
     items = [{k: deserializer.deserialize(v) for k, v in item.items()} for item in items]
     return {
         'statusCode': 200,
+        'headers': {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Methods': 'OPTIONS, GET'
+        },            
         'body': json.dumps(items)
     }
