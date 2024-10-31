@@ -10,7 +10,11 @@ def lambda_handler(event, context):
     response = dynamodb_client.query(
         TableName='Follows',
         KeyConditionExpression='username = :username',
-        ExpressionAttributeValues={':username': {'S': username}}
+        FilterExpression='active = :active',
+        ExpressionAttributeValues={
+            ':username': {'S': username},
+            ':active': {'BOOL': True}
+        }
     )
 
     status_code = response['ResponseMetadata']['HTTPStatusCode']
