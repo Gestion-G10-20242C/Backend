@@ -6,19 +6,21 @@ dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
 def lambda_handler(event, context):
     print(event)
-    query = "Cranford"
+    query = "Cranford" # aux
     #query = event['pathParameters']['query']
     #print(query)
     
-    # Aux, búsqueda exacta por ahora
-    response = dynamodb_client.get_item(
+    print("searching book...")
+    response = dynamodb_client.query(
         TableName='Books',
-        Key={
-            'title': {
-                'S': query
-            }
-        }
+        IndexName='title-index',
+        KeyConditionExpression='title = :query',
+        ExpressionAttributeValues={
+        ':query': {'S': query}
+        },
+        ProjectionExpression="image_url, title, author_name, average_rating, text_reviews_count, publication_date"
     )
+    print(response)
     
     # Verificación del estado de la respuesta
     status_code = response['ResponseMetadata']['HTTPStatusCode']
@@ -28,14 +30,17 @@ def lambda_handler(event, context):
             'body': json.dumps('Error')
         }
     
-    if 'Item' not in response:
+    if 'Items' not in response:
         return {
             'statusCode': 404,
-            'body': json.dumps('Error: Book not found')
+            'body': json.dumps('Error: No books found')
         }
     
+    #deserializer = TypeDeserializer()
+    #books = {k: deserializer.deserialize(v) for k, v in response['Items'].items()}
     deserializer = TypeDeserializer()
-    books = {k: deserializer.deserialize(v) for k, v in response['Item'].items()}
+    books = [ {k: deserializer.deserialize(v) for k, v in item.items()} for item in response['Items'] ]
+
     
     return {
         'statusCode': 200,
@@ -47,8 +52,7 @@ def lambda_handler(event, context):
         'body': json.dumps(books)
     }
 
-
 ###
 # For local testing:
 #event = 
-#print("User:", lambda_handler(event, {}))
+#print("Books:", lambda_handler(event, {}))
