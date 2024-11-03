@@ -26,11 +26,13 @@ def lambda_handler(event, context):
     #query = event['pathParameters']['query']
     #print(query)
     
+    index = 'title-index'
+    field = 'title'
     print("searching book...")
     response = dynamodb_client.query(
         TableName='Books',
-        IndexName='title-index',
-        KeyConditionExpression='title = :query',
+        IndexName=index,
+        KeyConditionExpression=f"{field} = :query",
         ExpressionAttributeValues={
         ':query': {'S': query}
         },
