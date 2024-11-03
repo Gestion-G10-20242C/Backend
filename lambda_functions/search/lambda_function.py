@@ -20,7 +20,8 @@ def deserialize_items(items):
         for item in items
     ]
 
-def search_books_by(field, index, query):
+# More efficient but exact only search
+def exact_search_books_by(field, index, query):
     print("searching book...")
     response = dynamodb_client.query(
         TableName='Books',
@@ -31,7 +32,6 @@ def search_books_by(field, index, query):
         },
         ProjectionExpression="image_url, title, author_name, average_rating, text_reviews_count, publication_date"
     )
-    #aux probando: response = aux_response
     print(response)
     
     # Verificación del estado de la respuesta
@@ -48,15 +48,46 @@ def search_books_by(field, index, query):
             'body': json.dumps('Error: No books found')
         }
     
-    print("hola")
-    print(response.items())
-    print("hola2")
-    #deserializer = TypeDeserializer()
-    #books = [ {k: deserializer.deserialize(v) for k, v in item.items()} for item in response['Items'] ]
     books = deserialize_items(response['Items'])
     return books
 
+# Less efficient but parcial search
+def search_books(query):
+    print("searching book...")
+    response = dynamodb_client.scan(
+      TableName='Books',
+      FilterExpression="contains(title, :query) OR contains(author_name, :query) OR contains(genres, :query)",
+      ExpressionAttributeValues={
+        ':query': {'S': query}
+    },
+    ProjectionExpression="image_url, title, author_name, average_rating, text_reviews_count, publication_date"
+  )
+    print(response)
+    
+    # Verificación del estado de la respuesta
+    status_code = response['ResponseMetadata']['HTTPStatusCode']
+    if status_code != 200:
+        return {
+            'statusCode': 400,
+            'body': json.dumps('Error')
+        }
+    
+    if 'Items' not in response:
+        return {
+            'statusCode': 404,
+            'body': json.dumps('Error: No books found')
+        }
+
+    return deserialize_items(response['Items'])
+
+
 def lambda_handler(event, context):
+    print(event) # no me está llegando (¿?)
+    query = "Cranford" # aux
+    #query = event['pathParameters']['query']
+    #print(query)
+        
+    """
     TITLE_INDEX = 'title-index'
     TITLE_FIELD = 'title'
 
@@ -65,21 +96,15 @@ def lambda_handler(event, context):
 
     GENRES_INDEX = 'genres-index'
     GENRES_FIELD = 'genres'
-    print(event)
-    query = "Cranford" # aux
-    #query = event['pathParameters']['query']
-    #print(query)
-    
-    books_by_title = search_books_by(TITLE_FIELD, TITLE_INDEX, query)
-    books_by_author = search_books_by(AUTHOR_FIELD, AUTHOR_INDEX, 'Liz Coley') # aux, es query
-    books_by_genres = search_books_by(GENRES_FIELD, GENRES_INDEX, 'fiction') # aux, es query
     ### Probando, falta caso de error, y algunos ajustes más #mañanaVuelvo
-
     books = {
-        'books_by_title': books_by_title,
-        'books_by_author': books_by_author,
-        'books_by_genres': books_by_genres,
+        'books_by_title': exact_search_books_by(TITLE_FIELD, TITLE_INDEX, query),
+        'books_by_author': exact_search_books_by(AUTHOR_FIELD, AUTHOR_INDEX, 'Liz Coley'), # aux, acá va query,
+        'books_by_genres': exact_search_books_by(GENRES_FIELD, GENRES_INDEX, 'fiction'), # aux, acá va query
     }
+    """
+
+    books = search_books(query)
     
     return {
         'statusCode': 200,
