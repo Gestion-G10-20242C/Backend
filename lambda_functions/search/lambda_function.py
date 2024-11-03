@@ -5,8 +5,10 @@ from boto3.dynamodb.types import TypeDeserializer
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
 def lambda_handler(event, context):
-    query = event['pathParameters']['query']
-    print(query)
+    print(event)
+    query = "Cranford"
+    #query = event['pathParameters']['query']
+    #print(query)
     
     # Aux, búsqueda exacta por ahora
     response = dynamodb_client.get_item(
