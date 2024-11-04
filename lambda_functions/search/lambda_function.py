@@ -58,7 +58,7 @@ def search_books_by(field, query):
     else:
         expression = "contains(title, :query) OR contains(author_name, :query) OR contains(genres, :query)"
 
-    print("searching book...")
+    print(f"Query: {query}, field: {field}\nSearching book...")
     response = dynamodb_client.scan(
       TableName='Books',
       FilterExpression=expression,
@@ -73,13 +73,9 @@ def search_books_by(field, query):
 
 
 def lambda_handler(event, context):
-    print(event) # no me está llegando (¿?)
-    query = "Liz" #"Harry"#"Cranford" # aux temp
-    field = None #"title" # aux temp
-
-    #query = event['pathParameters']['query']
-    #field = event.get('queryStringParameters', {}).get('field', None)
-    #print(query)
+    print(event) # debug
+    query = event.get('queryStringParameters', {}).get('query', None) # aux
+    field = event.get('queryStringParameters', {}).get('field', None)
         
     """
     TITLE_INDEX = 'title-index'
