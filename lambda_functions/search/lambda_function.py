@@ -52,39 +52,33 @@ def exact_search_books_by(field, index, query):
     return books
 
 # Less efficient but parcial search
-def search_books(query):
+def search_books_by(field, query):
+    if field:
+        expression = f"contains({field}, :query)"
+    else:
+        expression = "contains(title, :query) OR contains(author_name, :query) OR contains(genres, :query)"
+
     print("searching book...")
     response = dynamodb_client.scan(
       TableName='Books',
-      FilterExpression="contains(title, :query) OR contains(author_name, :query) OR contains(genres, :query)",
+      FilterExpression=expression,
       ExpressionAttributeValues={
         ':query': {'S': query}
     },
     ProjectionExpression="image_url, title, author_name, average_rating, text_reviews_count, publication_date"
-  )
+    )
     print(response)
     
-    # Verificación del estado de la respuesta
-    status_code = response['ResponseMetadata']['HTTPStatusCode']
-    if status_code != 200:
-        return {
-            'statusCode': 400,
-            'body': json.dumps('Error')
-        }
-    
-    if 'Items' not in response:
-        return {
-            'statusCode': 404,
-            'body': json.dumps('Error: No books found')
-        }
-
-    return deserialize_items(response['Items'])
+    return response
 
 
 def lambda_handler(event, context):
     print(event) # no me está llegando (¿?)
-    query = "Cranford" # aux
+    query = "Liz" #"Harry"#"Cranford" # aux temp
+    field = None #"title" # aux temp
+
     #query = event['pathParameters']['query']
+    #field = event.get('queryStringParameters', {}).get('field', None)
     #print(query)
         
     """
@@ -104,7 +98,23 @@ def lambda_handler(event, context):
     }
     """
 
-    books = search_books(query)
+    response = search_books_by(field, query)
+
+    # Verificación del estado de la respuesta
+    status_code = response['ResponseMetadata']['HTTPStatusCode']
+    if status_code != 200:
+        return {
+            'statusCode': 400,
+            'body': json.dumps('Error')
+        }
+    
+    if 'Items' not in response:
+        return {
+            'statusCode': 404,
+            'body': json.dumps('Error: No books found')
+        }
+    
+    books = deserialize_items(response['Items'])
     
     return {
         'statusCode': 200,
