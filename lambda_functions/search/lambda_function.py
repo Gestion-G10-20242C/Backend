@@ -16,6 +16,7 @@ def deserialize_items(items):
             'image_url': item['image_url']['S'],
             'author_name': item['author_name']['S'],
             'title': item['title']['S'],
+            'genres': item['genres']['S'],
         }
         for item in items
     ]
@@ -65,7 +66,7 @@ def search_books_by(field, query):
       ExpressionAttributeValues={
         ':query': {'S': query}
     },
-    ProjectionExpression="image_url, title, author_name, average_rating, text_reviews_count, publication_date"
+    ProjectionExpression="image_url, title, author_name, genres, average_rating, text_reviews_count, publication_date"
     )
     print(response)
     
@@ -76,25 +77,9 @@ def lambda_handler(event, context):
     print(event) # debug
     query = event.get('queryStringParameters', {}).get('query', None) # aux
     field = event.get('queryStringParameters', {}).get('field', None)
-        
-    """
-    TITLE_INDEX = 'title-index'
-    TITLE_FIELD = 'title'
 
-    AUTHOR_INDEX = 'author_name-index'
-    AUTHOR_FIELD = 'author_name'
-
-    GENRES_INDEX = 'genres-index'
-    GENRES_FIELD = 'genres'
-    ### Probando, falta caso de error, y algunos ajustes más #mañanaVuelvo
-    books = {
-        'books_by_title': exact_search_books_by(TITLE_FIELD, TITLE_INDEX, query),
-        'books_by_author': exact_search_books_by(AUTHOR_FIELD, AUTHOR_INDEX, 'Liz Coley'), # aux, acá va query,
-        'books_by_genres': exact_search_books_by(GENRES_FIELD, GENRES_INDEX, 'fiction'), # aux, acá va query
-    }
-    """
-
-    response = search_books_by(field, query)
+    case_insentive_query = query.title()
+    response = search_books_by(field, case_insentive_query)
 
     # Verificación del estado de la respuesta
     status_code = response['ResponseMetadata']['HTTPStatusCode']
