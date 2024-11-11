@@ -10,6 +10,8 @@ dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 def deserialize_items(items):
     return [
         {
+            'id': item['id']['S'],
+            'isbn': item['isbn']['S'],
             'average_rating': float(item['average_rating']['N']),
             'publication_date': item['publication_date']['S'],
             'text_reviews_count': int(item['text_reviews_count']['N']),
@@ -31,7 +33,7 @@ def exact_search_books_by(field, index, query):
         ExpressionAttributeValues={
         ':query': {'S': query}
         },
-        ProjectionExpression="image_url, title, author_name, average_rating, text_reviews_count, publication_date"
+        ProjectionExpression="id, isbn, image_url, title, author_name, average_rating, text_reviews_count, publication_date"
     )
     print(response)
     
@@ -66,7 +68,7 @@ def search_books_by(field, query):
       ExpressionAttributeValues={
         ':query': {'S': query}
     },
-    ProjectionExpression="image_url, title, author_name, genres, average_rating, text_reviews_count, publication_date"
+    ProjectionExpression="id, isbn, image_url, title, author_name, genres, average_rating, text_reviews_count, publication_date"
     )
     print(response)
     
