@@ -1,6 +1,5 @@
 import json
 import boto3
-from boto3.dynamodb.types import TypeDeserializer
 
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
@@ -46,19 +45,9 @@ def rate_book(book_id, user_rate):
 def review_book(book_id, user_rate):
     ### ToDo.
     # Get book_id
-    response = dynamodb_client.get_item(
-        TableName='Books',
-        Key={'id': {'S': book_id}},
-        ProjectionExpression='id, average_rating, ratings_count'
-    )
-
-    # camino feliz, response dio ok
-    #book = deserialize_book(response)
-    # Review
+    response = {}
     
     return response
-
-
 
 def lambda_handler(event, context):
     print(event) # debug
@@ -97,7 +86,7 @@ def lambda_handler(event, context):
         'headers': {
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'OPTIONS, GET'
+            'Access-Control-Allow-Methods': 'OPTIONS, PATCH'
         },
         'body': json.dumps(response)
     }
