@@ -47,6 +47,7 @@ def rate_book(book_id, user_rate):
     return response
 
 def review_book(book_id, user_rate):
+    ### ToDo.
     # Get book_id
     response = dynamodb_client.get_item(
         TableName='Books',
@@ -55,26 +56,8 @@ def review_book(book_id, user_rate):
     )
 
     # camino feliz, response dio ok
-    book = deserialize_book(response)
-    # New avg _ ((avg*count) + user_rate)/ (count+1)
-    new_sum = book['average_rating']*book['ratings_count'] + user_rate
-    new_rate_count = book['ratings_count'] + 1
-    new_avg_rate = new_sum/new_rate_count
-
-    # Update book avg on db
-    response = dynamodb_client.update_item(
-        TableName='Books',
-        Key={'id': {'S': book_id}},
-        UpdateExpression='SET average_rating = :new_avg, ratings_count = :new_count',
-        ExpressionAttributeValues={
-            ':new_avg': {'N': str(new_avg_rate)},
-            ':new_count': {'N': str(new_rate_count)}
-        },
-        ReturnValues="UPDATED_NEW" # devuelve cómo quedó.
-    )
-
-    # camino feliz, dio ok    
-    print(response)
+    #book = deserialize_book(response)
+    # Review
     
     return response
 
