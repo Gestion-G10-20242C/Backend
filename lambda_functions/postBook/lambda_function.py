@@ -77,7 +77,7 @@ def lambda_handler(event, context):
             'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Allow-Methods': 'OPTIONS, POST'
         },
-        'body': json.dumps(body)
+        'body': json.dumps(item)
     }
 
 
