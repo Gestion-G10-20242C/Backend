@@ -17,6 +17,10 @@ def fetchOwnerName(username):
     item = response.get('Item', {})
     return item.get('name', {}).get('S', '')
 
+def clean_dynamodb_item(dynamodb_item):
+    """Transform DynamoDB item format to standard JSON."""
+    return {key: list(value.values())[0] for key, value in dynamodb_item.items()}
+
 
 
 def lambda_handler(event, context):
@@ -60,7 +64,7 @@ def lambda_handler(event, context):
             'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Allow-Methods': 'OPTIONS, POST'
         },
-        'body': json.dumps(item)
+        'body': json.dumps(clean_dynamodb_item(item))
     }
 
 # event = {
