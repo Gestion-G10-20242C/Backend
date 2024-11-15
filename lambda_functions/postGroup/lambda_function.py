@@ -67,4 +67,4 @@ def lambda_handler(event, context):
 #     'pathParameters': {'username': 'gabitest'},
 #     'body': '{"description": "El mejor grupo del mundo", "image_url":"https://i.pinimg.com/736x/f8/77/11/f8771136acc302740ba301d51d39cf7a.jpg", "genres": "Gabigol"}'
 # }
-# lambda_handler(event, None)
+# lambda_handler(event, None) 
