@@ -1,9 +1,9 @@
 import http.client
 import json
 import os
-import dotenv
 from system_prompt import build_system_message
-dotenv.load_dotenv()
+#import dotenv #local test
+#dotenv.load_dotenv()
 API_KEY = os.getenv("OPENAI_API_KEY")
 
 
