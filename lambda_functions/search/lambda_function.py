@@ -70,7 +70,7 @@ def search_books_by(field, query):
     },
     ProjectionExpression="id, isbn, image_url, title, author_name, genres, average_rating, text_reviews_count, publication_date"
     )
-    print(response)
+    print(f"Found {len(response['Items'])} books")
     
     return response
 
