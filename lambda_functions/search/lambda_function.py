@@ -106,10 +106,6 @@ def lambda_handler(event, context):
             'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Allow-Methods': 'OPTIONS, GET'
         },
-        'body': json.dumps(books)
+        'body': json.dumps(books),
+        'lastEvaluatedKey': response.get('LastEvaluatedKey', None)
     }
-
-###
-# For local testing:
-#event = {}
-#print("Books:", lambda_handler(event, {}))
