@@ -106,6 +106,5 @@ def lambda_handler(event, context):
             'Access-Control-Allow-Headers': 'Content-Type',
             'Access-Control-Allow-Methods': 'OPTIONS, GET'
         },
-        'body': json.dumps(books),
-        'lastEvaluatedKey': response.get('LastEvaluatedKey', None)
+        'body': json.dumps({'books': books, 'lastEvaluatedKey': response.get('LastEvaluatedKey', None)})
     }
