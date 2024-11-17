@@ -76,14 +76,14 @@ def search_books_by(field, query):
 
 
 def lambda_handler(event, context):
-    print(event) # debug
-    query = event.get('queryStringParameters', {}).get('query', None) # aux
+    print(event.get('queryStringParameters', {}))
+    query = event.get('queryStringParameters', {}).get('query', None)
     field = event.get('queryStringParameters', {}).get('field', None)
 
-    case_insentive_query = query.title()
-    response = search_books_by(field, case_insentive_query)
+    if 'genres' != field:
+        query = query.title()
 
-    # Verificación del estado de la respuesta
+    response = search_books_by(field, query)
     status_code = response['ResponseMetadata']['HTTPStatusCode']
     if status_code != 200:
         return {
