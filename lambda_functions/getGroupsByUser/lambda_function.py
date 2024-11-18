@@ -72,22 +72,25 @@ def lambda_handler(event, context):
         #################
 
         # Ahora obtenemos la información de los grupos que matchean con alguno de los group_ids
-        keys = [{'id': {'N': str(group_id['id'])}} for group_id in group_ids]
+        if len(group_ids) > 0:
+            keys = [{'id': {'N': str(group_id['id'])}} for group_id in group_ids]
 
-        response = dynamodb_client.batch_get_item(
-            RequestItems={
-                'Groups': {
-                    'Keys': keys
+            response = dynamodb_client.batch_get_item(
+                RequestItems={
+                    'Groups': {
+                        'Keys': keys
+                    }
                 }
-            }
-        )
+            )
 
-        status_code = response['ResponseMetadata']['HTTPStatusCode']
-        if status_code != 200:
-            raise RuntimeError(f"Error {status_code}, batch_get_item dynamo operation failed")
+            status_code = response['ResponseMetadata']['HTTPStatusCode']
+            if status_code != 200:
+                raise RuntimeError(f"Error {status_code}, batch_get_item dynamo operation failed")
 
-        print(f"batch_get_item: {response}")
-        groups = deserialize_groups(response['Responses']['Groups'])
+            print(f"batch_get_item: {response}")
+            groups = deserialize_groups(response['Responses']['Groups'])
+        else:
+            groups = []
 
         return {
             'statusCode': 200,

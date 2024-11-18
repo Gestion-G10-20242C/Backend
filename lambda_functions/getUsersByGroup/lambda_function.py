@@ -44,28 +44,31 @@ def lambda_handler(event, context):
 
         #################
         # Ahora obtenemos la información de los usuarios que matchean con alguno de los usernames
-        keys = [{'username': {'S': username['username']}} for username in usernames]
+        if len(usernames) > 0:
+            keys = [{'username': {'S': username['username']}} for username in usernames]
 
-        response = dynamodb_client.batch_get_item(
-            RequestItems={
-                'UserProfiles': {
-                    'Keys': keys
+            response = dynamodb_client.batch_get_item(
+                RequestItems={
+                    'UserProfiles': {
+                        'Keys': keys
+                    }
                 }
-            }
-        )
+            )
 
-        status_code = response['ResponseMetadata']['HTTPStatusCode']
-        if status_code != 200:
-            raise RuntimeError(f"Error {status_code}, batch_get_item dynamo operation failed")
-        
-        # Formateamos los resultados
-        deserializer = TypeDeserializer()        
-        if 'Responses' in response and 'UserProfiles' in response['Responses']:
-            items = response['Responses']['UserProfiles']  # Acceder a los ítems
-            users = [
-                {k: deserializer.deserialize(v) for k, v in item.items()}
-                for item in items
-            ]
+            status_code = response['ResponseMetadata']['HTTPStatusCode']
+            if status_code != 200:
+                raise RuntimeError(f"Error {status_code}, batch_get_item dynamo operation failed")
+            
+            # Formateamos los resultados
+            deserializer = TypeDeserializer()        
+            if 'Responses' in response and 'UserProfiles' in response['Responses']:
+                items = response['Responses']['UserProfiles']  # Acceder a los ítems
+                users = [
+                    {k: deserializer.deserialize(v) for k, v in item.items()}
+                    for item in items
+                ]
+            else:
+                users = []
         else:
             users = []
               
