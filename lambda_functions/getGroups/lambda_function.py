@@ -1,3 +1,4 @@
+from decimal import Decimal
 import json
 import boto3
 from boto3.dynamodb.types import TypeDeserializer
@@ -7,7 +8,11 @@ dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 def deserialize_groups(dynamodb_items):
     """deserializer = TypeDeserializer()
     return [
-        {key: deserializer.deserialize(value) for key, value in item.items()}
+        {
+            key: (int(deserializer.deserialize(value)) if isinstance(value, Decimal) else deserializer.deserialize(value))
+            for key,value in item.items()
+        }
+        #{key: deserializer.deserialize(value) for key, value in item.items()}
         for item in dynamodb_items
     ]"""
     return[{
@@ -25,7 +30,6 @@ def deserialize_groups(dynamodb_items):
 def lambda_handler(event, context):
     try:
         response = dynamodb_client.scan(TableName='Groups')    
-        print(response) # debug
 
         status_code = response['ResponseMetadata']['HTTPStatusCode']
         if status_code != 200:
