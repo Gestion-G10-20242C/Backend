@@ -39,9 +39,6 @@ def deserialize_group_ids(dynamodb_items):
         for item in dynamodb_items
     ]
 
-#def deserialize_group_ids__(dynamodb_items):    
- #   return [item['id']['N'] for item in dynamodb_items]
-
 def lambda_handler(event, context):
     try:
         print(event)
@@ -75,10 +72,7 @@ def lambda_handler(event, context):
         #################
 
         # Ahora obtenemos la información de los grupos que matchean con alguno de los group_ids
-        #keys = [{'id': {'N': group_id}} for group_id in group_ids]
-        #keys = [{'id': {'N': str(group_id)}} for group_id in group_ids]
         keys = [{'id': {'N': str(group_id['id'])}} for group_id in group_ids]
-        print(f"keys: {keys}")
 
         response = dynamodb_client.batch_get_item(
             RequestItems={
@@ -109,4 +103,3 @@ def lambda_handler(event, context):
             'statusCode': 500,
             'body': json.dumps({'Error': str(e)})
         }
-
