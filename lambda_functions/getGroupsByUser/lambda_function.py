@@ -39,8 +39,8 @@ def deserialize_group_ids(dynamodb_items):
         for item in dynamodb_items
     ]
 
-#def deserialize_group_ids_(dynamodb_items):    
-    #return [int(item['id']['N']) for item in dynamodb_items]
+#def deserialize_group_ids__(dynamodb_items):    
+ #   return [item['id']['N'] for item in dynamodb_items]
 
 def lambda_handler(event, context):
     try:
@@ -78,8 +78,9 @@ def lambda_handler(event, context):
         #keys = [{'id': {'N': group_id}} for group_id in group_ids]
         #keys = [{'id': {'N': str(group_id)}} for group_id in group_ids]
         keys = [{'id': {'N': str(group_id['id'])}} for group_id in group_ids]
+        print(f"keys: {keys}")
 
-        response_ = dynamodb_client.batch_get_item(
+        response = dynamodb_client.batch_get_item(
             RequestItems={
                 'Groups': {
                     'Keys': keys
@@ -91,7 +92,7 @@ def lambda_handler(event, context):
         if status_code != 200:
             raise RuntimeError(f"Error {status_code}, batch_get_item dynamo operation failed")
 
-        print(f"batch_get_item: {response_}")
+        print(f"batch_get_item: {response}")
         groups = deserialize_groups(response['Responses']['Groups'])
 
         return {
