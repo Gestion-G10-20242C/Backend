@@ -5,21 +5,6 @@ from boto3.dynamodb.types import TypeDeserializer
 
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
-def deserialize_users(dynamodb_items):
-    
-    return[{
-            'owner_name': item['owner_name']['S'],
-            'owner': item['owner']['S'],
-            'image_url': item['image_url']['S'],
-            'description': item['description']['S'],                        
-            'id': int(item['id']['N']), #
-            'genres': item['genres']['S'],
-            'name': item['name']['S'],
-        }
-        for item in dynamodb_items
-    ]
-
-
 def deserialize_usernames(dynamodb_items):
     return[{
             'username': item['username']['S'],            
@@ -30,7 +15,6 @@ def deserialize_usernames(dynamodb_items):
 
 def lambda_handler(event, context):
     try:
-        #print(event)
         group_id = event['pathParameters']['group_id']
 
         # Obtenemos los username's de los usuarios que pertenecen al grupo group_id
@@ -59,7 +43,6 @@ def lambda_handler(event, context):
         usernames = deserialize_usernames(response['Items'])
 
         #################
-
         # Ahora obtenemos la información de los usuarios que matchean con alguno de los usernames
         keys = [{'username': {'S': username['username']}} for username in usernames]
 
@@ -74,16 +57,9 @@ def lambda_handler(event, context):
         status_code = response['ResponseMetadata']['HTTPStatusCode']
         if status_code != 200:
             raise RuntimeError(f"Error {status_code}, batch_get_item dynamo operation failed")
-
-        print(f"batch_get_item: {response}")
-        #users = deserialize_users(response['Responses']['UserProfiles'])
-        deserializer = TypeDeserializer()
-        #user = {k: deserializer.deserialize(v) for k, v in response['Item'].items()}  
-        #users = {k: deserializer.deserialize(v) for k, v in response['Items'].items()}  
-        """users = [
-            {k: deserializer.deserialize(v) for k, v in item.items()}
-            for item in response['Items']
-        ]"""
+        
+        # Formateamos los resultados
+        deserializer = TypeDeserializer()        
         if 'Responses' in response and 'UserProfiles' in response['Responses']:
             items = response['Responses']['UserProfiles']  # Acceder a los ítems
             users = [
