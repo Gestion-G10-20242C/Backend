@@ -16,13 +16,13 @@ def deserialize_groups(dynamodb_items):
         for item in dynamodb_items
     ]"""
     return[{
-            'owner_name': item['owner_name']['S'],
-            'owner': item['owner']['S'],
-            'image_url': item['image_url']['S'],
-            'description': item['description']['S'],                        
-            'id': int(item['id']['N']), #
-            'genres': item['genres']['S'],
-            'name': item['name']['S'],
+            'owner_name': item.get('owner_name', {}).get('S', ''),
+            'owner': item.get('owner', {}).get('S', ''),
+            'image_url': item.get('image_url', {}).get('S', ''),
+            'description': item.get('description', {}).get('S', ''),
+            'id': int(item['id']['N']), # id tiene que estar xq es clave de partición
+            'genres': item.get('genres', {}).get('S', ''),
+            'name': item.get('name', {}).get('S', '')
         }
         for item in dynamodb_items
     ]
@@ -35,7 +35,10 @@ def lambda_handler(event, context):
         if status_code != 200:
             raise RuntimeError(f"Error {status_code}, dynamo operation failed")
         
-        groups = deserialize_groups(response['Items'])
+        if 'Items' in response:
+            groups = deserialize_groups(response['Items'])
+        else:
+            groups = []
 
         return {
             'statusCode': 200,
