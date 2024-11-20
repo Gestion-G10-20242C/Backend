@@ -5,7 +5,7 @@ from boto3.dynamodb.types import TypeDeserializer
 
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
-# COPYPASTED FUNCTION FROM GETUSERSBUGROUP LAMBDA.
+### BEGIN COPYPASTED FUNCTIONS FROM GETUSERSBUGROUP LAMBDA.
 def get_users_by_group(group_id: str):
     # Obtenemos los username's de los usuarios que pertenecen al grupo group_id
     """response = dynamodb_client.query(
@@ -63,8 +63,14 @@ def get_users_by_group(group_id: str):
         users = []
     return users
 
-
-
+def deserialize_usernames(dynamodb_items):
+    return[{
+            'username': item['username']['S'],            
+            #'id': int(item['id']['N']), #
+        }
+        for item in dynamodb_items
+    ]
+### END COPYPASTED FUNCTIONS.
 
 def deserialize_groups(dynamodb_items):
     """deserializer = TypeDeserializer()
