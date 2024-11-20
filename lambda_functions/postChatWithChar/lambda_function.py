@@ -43,6 +43,11 @@ def lambda_handler(event, context):
         model_response = send_request_to_openai(user_message, system_message)
         return {
             "statusCode": 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS, POST'
+            },
             "body": model_response
         }
     except Exception as e:
