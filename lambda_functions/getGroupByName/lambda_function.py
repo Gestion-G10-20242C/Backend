@@ -8,8 +8,6 @@ def lambda_handler(event, context):
     group_id = event['pathParameters']['group_id']
 
     try:
-
-        print(f"Found {len(response.get('Items', []))} groups with matching name")
         response = dynamodb_client.scan(
             TableName='Groups',
             FilterExpression="contains(#name, :query)",
@@ -34,12 +32,10 @@ def lambda_handler(event, context):
                 'body': json.dumps(items)
             }
 
-        print(f"Searching for group with ID {group_id}")
         response = dynamodb_client.get_item(
             TableName='Groups',
             Key={'id': {'N': group_id}}
         )
-        print(f"Found {len(response.get('Items', []))} groups with matching ID")
 
         status_code = response['ResponseMetadata']['HTTPStatusCode']
         if status_code != 200:
@@ -48,7 +44,6 @@ def lambda_handler(event, context):
                 'body': json.dumps('Error while querying DynamoDB')
             }
 
-        # Obtener y deserializar los elementos
         items = response.get('Items', [])
         deserializer = TypeDeserializer()
         items = [{k: deserializer.deserialize(v) for k, v in item.items()} for item in items]
@@ -75,4 +70,4 @@ def lambda_handler(event, context):
 #     'pathParameters': {'group_id': '1731699934304'},
 #     'body': '{"description": "El mejor libro del mundo", "image_url":"https://i.pinimg.com/736x/f8/77/11/f8771136acc302740ba301d51d39cf7a.jpg", "genres": "Gabigol"}'
 # }
-# lambda_handler(event, None)
+# print(lambda_handler(event, None))
