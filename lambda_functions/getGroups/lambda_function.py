@@ -103,7 +103,7 @@ def lambda_handler(event, context):
 
         # Add members of each group
         for group in groups:
-            group['members'] = get_users_by_group(group['id'])
+            group['members'] = get_users_by_group(str(group['id']))
 
         return {
             'statusCode': 200,
