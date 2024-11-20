@@ -41,7 +41,7 @@ def deserialize_group_ids(dynamodb_items):
 
 def lambda_handler(event, context):
     try:
-        print(event)
+        print(event.get('pathParameters', {}))
         username = event['pathParameters']['username']
 
         # Obtenemos los group_id's de los grupos a los que pertenece usuario username
@@ -55,13 +55,13 @@ def lambda_handler(event, context):
         )"""
         response = dynamodb_client.scan(
             TableName='Members',
-            FilterExpression='username = :username',
+            FilterExpression='username = :username AND active = :active',
             ExpressionAttributeValues={
-                ':username': {'S': username}
+                ':username': {'S': username},
+                ':active': {'BOOL': True}
             },
             ProjectionExpression='id'
         )
-        print(response) # debug
 
         status_code = response['ResponseMetadata']['HTTPStatusCode']
         if status_code != 200:
