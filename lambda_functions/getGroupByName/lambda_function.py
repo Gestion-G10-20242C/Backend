@@ -8,13 +8,8 @@ def lambda_handler(event, context):
     group_id = event['pathParameters']['group_id']
 
     try:
-        print(f"Searching for group with ID {group_id}")
-        response = dynamodb_client.get_item(
-            TableName='Groups',
-            Key={'id': {'N': group_id}}
-        )
-        print(f"Found {len(response.get('Items', []))} groups with matching ID")
 
+        print(f"Found {len(response.get('Items', []))} groups with matching name")
         response = dynamodb_client.scan(
             TableName='Groups',
             FilterExpression="contains(#name, :query)",
@@ -25,7 +20,26 @@ def lambda_handler(event, context):
                 ':query': {'S': group_id}
             }
         )
-        print(f"Found {len(response.get('Items', []))} groups with matching name")
+        if 'Items' in response:
+            items = response['Items']
+            deserializer = TypeDeserializer()
+            items = [{k: deserializer.deserialize(v) for k, v in item.items()} for item in items]
+            return {
+                'statusCode': 200,
+                'headers': {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                    'Access-Control-Allow-Methods': 'OPTIONS, GET'
+                },
+                'body': json.dumps(items)
+            }
+
+        print(f"Searching for group with ID {group_id}")
+        response = dynamodb_client.get_item(
+            TableName='Groups',
+            Key={'id': {'N': group_id}}
+        )
+        print(f"Found {len(response.get('Items', []))} groups with matching ID")
 
         status_code = response['ResponseMetadata']['HTTPStatusCode']
         if status_code != 200:
