@@ -4,55 +4,61 @@ from boto3.dynamodb.types import TypeDeserializer
 
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
-"""
-Lambda function to retrieve a group profile from a DynamoDB table.
-Parameters:
-event (dict): The event dictionary containing request parameters.
-    - pathParameters (dict): Dictionary containing path parameters.
-        - groupname (str): The name of the group profile to retrieve.
-Returns:
-dict: A dictionary containing the HTTP status code and the response body.
-    - statusCode (int): The HTTP status code of the response.
-    - body (str): The JSON-encoded response body.
-        - On success: JSON-encoded group profile.
-        - On failure: JSON-encoded error message.
-"""
 def lambda_handler(event, context):
-    groupname = event['pathParameters']['groupname']
-    print(groupname)
-    
-    response = dynamodb_client.get_item(
-        TableName='Groups',
-        Key={
-            'groupname': {
-                'S': groupname
+    group_id = event['pathParameters']['group_id']
+
+    try:
+        print(f"Searching for group with ID {group_id}")
+        response = dynamodb_client.get_item(
+            TableName='Groups',
+            Key={'id': {'N': group_id}}
+        )
+        print(f"Found {len(response.get('Items', []))} groups with matching ID")
+
+        response = dynamodb_client.scan(
+            TableName='Groups',
+            FilterExpression="contains(#name, :query)",
+            ExpressionAttributeNames={
+                '#name': 'name' 
+            },
+            ExpressionAttributeValues={
+                ':query': {'S': group_id}
             }
-        }
-    )
-    
-    # Verificación del estado de la respuesta
-    status_code = response['ResponseMetadata']['HTTPStatusCode']
-    if status_code != 200:
+        )
+        print(f"Found {len(response.get('Items', []))} groups with matching name")
+
+        status_code = response['ResponseMetadata']['HTTPStatusCode']
+        if status_code != 200:
+            return {
+                'statusCode': 400,
+                'body': json.dumps('Error while querying DynamoDB')
+            }
+
+        # Obtener y deserializar los elementos
+        items = response.get('Items', [])
+        deserializer = TypeDeserializer()
+        items = [{k: deserializer.deserialize(v) for k, v in item.items()} for item in items]
+
+        # Responder con los datos obtenidos
         return {
-            'statusCode': 400,
-            'body': json.dumps('Error')
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS, GET'
+            },
+            'body': json.dumps(items)
         }
-    
-    if 'Item' not in response:
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
         return {
-            'statusCode': 404,
-            'body': json.dumps('Error: Group not found')
+            'statusCode': 500,
+            'body': json.dumps('Internal server error')
         }
-    
-    deserializer = TypeDeserializer()
-    group_profile = {k: deserializer.deserialize(v) for k, v in response['Item'].items()}
-    
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'OPTIONS, GET'
-        },
-        'body': json.dumps(group_profile)
-    }
+
+# event = {
+#     'pathParameters': {'group_id': '1731699934304'},
+#     'body': '{"description": "El mejor libro del mundo", "image_url":"https://i.pinimg.com/736x/f8/77/11/f8771136acc302740ba301d51d39cf7a.jpg", "genres": "Gabigol"}'
+# }
+# lambda_handler(event, None)
