@@ -13,66 +13,69 @@ def deserialize_usernames(dynamodb_items):
         for item in dynamodb_items
     ]
 
+def get_users_by_group(group_id: str):
+    # Obtenemos los username's de los usuarios que pertenecen al grupo group_id
+    """response = dynamodb_client.query(
+        TableName='Members',
+        KeyConditionExpression='id = :id',
+        ExpressionAttributeValues={
+            ':id': {'N': group_id}
+        },
+        ProjectionExpression='username'
+    )"""
+    response = dynamodb_client.scan(
+        TableName='Members',
+        FilterExpression='id = :id',
+        ExpressionAttributeValues={
+            ':id': {'N': group_id}
+        },
+        ProjectionExpression='username'
+    )
+    print(response) # debug
+
+    status_code = response['ResponseMetadata']['HTTPStatusCode']
+    if status_code != 200:
+        raise RuntimeError(f"Error {status_code}, dynamo operation failed")
+    
+    usernames = deserialize_usernames(response['Items'])
+
+    #################
+    # Ahora obtenemos la información de los usuarios que matchean con alguno de los usernames
+    if len(usernames) > 0:
+        keys = [{'username': {'S': username['username']}} for username in usernames]
+
+        response = dynamodb_client.batch_get_item(
+            RequestItems={
+                'UserProfiles': {
+                    'Keys': keys
+                }
+            }
+        )
+
+        status_code = response['ResponseMetadata']['HTTPStatusCode']
+        if status_code != 200:
+            raise RuntimeError(f"Error {status_code}, batch_get_item dynamo operation failed")
+        
+        # Formateamos los resultados
+        deserializer = TypeDeserializer()        
+        if 'Responses' in response and 'UserProfiles' in response['Responses']:
+            items = response['Responses']['UserProfiles']  # Acceder a los ítems
+            users = [
+                {k: deserializer.deserialize(v) for k, v in item.items()}
+                for item in items
+            ]
+        else:
+            users = []
+    else:
+        users = []
+    return users
+
 def lambda_handler(event, context):
     try:
         group_id = event['pathParameters']['group_id']
 
-        # Obtenemos los username's de los usuarios que pertenecen al grupo group_id
-        """response = dynamodb_client.query(
-            TableName='Members',
-            KeyConditionExpression='id = :id',
-            ExpressionAttributeValues={
-                ':id': {'N': group_id}
-            },
-            ProjectionExpression='username'
-        )"""
-        response = dynamodb_client.scan(
-            TableName='Members',
-            FilterExpression='id = :id',
-            ExpressionAttributeValues={
-                ':id': {'N': group_id}
-            },
-            ProjectionExpression='username'
-        )
-        print(response) # debug
-
-        status_code = response['ResponseMetadata']['HTTPStatusCode']
-        if status_code != 200:
-            raise RuntimeError(f"Error {status_code}, dynamo operation failed")
-        
-        usernames = deserialize_usernames(response['Items'])
-
-        #################
-        # Ahora obtenemos la información de los usuarios que matchean con alguno de los usernames
-        if len(usernames) > 0:
-            keys = [{'username': {'S': username['username']}} for username in usernames]
-
-            response = dynamodb_client.batch_get_item(
-                RequestItems={
-                    'UserProfiles': {
-                        'Keys': keys
-                    }
-                }
-            )
-
-            status_code = response['ResponseMetadata']['HTTPStatusCode']
-            if status_code != 200:
-                raise RuntimeError(f"Error {status_code}, batch_get_item dynamo operation failed")
-            
-            # Formateamos los resultados
-            deserializer = TypeDeserializer()        
-            if 'Responses' in response and 'UserProfiles' in response['Responses']:
-                items = response['Responses']['UserProfiles']  # Acceder a los ítems
-                users = [
-                    {k: deserializer.deserialize(v) for k, v in item.items()}
-                    for item in items
-                ]
-            else:
-                users = []
-        else:
-            users = []
+        users = get_users_by_group(group_id)
               
-
         return {
             'statusCode': 200,
             'headers': {

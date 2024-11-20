@@ -3,6 +3,8 @@ import json
 import boto3
 from boto3.dynamodb.types import TypeDeserializer
 
+from Backend.lambda_functions.getUsersByGroup.lambda_function import get_users_by_group
+
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
 def deserialize_groups(dynamodb_items):
@@ -39,6 +41,10 @@ def lambda_handler(event, context):
             groups = deserialize_groups(response['Items'])
         else:
             groups = []
+
+        # Add members of each group
+        for group in groups:
+            group['members'] = get_users_by_group(group['id'])
 
         return {
             'statusCode': 200,
