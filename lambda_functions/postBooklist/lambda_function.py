@@ -53,6 +53,6 @@ def lambda_handler(event, context):
 
 # event = {
 #     'pathParameters': {'username': 'gabitest'},
-#     'body': '{"name":"Leidos"}'
+#     'body': '{"name":"En espera"}'
 # }
 # print(lambda_handler(event, None))

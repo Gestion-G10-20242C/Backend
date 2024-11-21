@@ -7,7 +7,7 @@ dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
 def clean_dynamodb_item(dynamodb_item):
     """Transform DynamoDB item format to standard JSON."""
-    return {key: list(value.values())[0] for key, value in dynamodb_item.items()}
+    return [list(value.values())[0] for key, value in dynamodb_item.items()]
 
 def add_cors_headers(response):
     """Add CORS headers to response."""
@@ -35,26 +35,25 @@ def lambda_handler(event, context):
 
     # Validar y actualizar el libro
     books = parse_books(item['books']['S'])
-    if body['id'] in books:
+    if any(book == body['id'] for book,_,_ in books):
         return add_cors_headers({
             'statusCode': 400,
-            'body': json.dumps('Book already in booklist')
+            'body': json.dumps('Book is already in booklist')
         })
 
-    books.append(body['id'])
-    updated_books = json.dumps(books)
+    books.append(get_book_data(body['id']))
 
     # Actualizar el item en DynamoDB
-    if not update_books(username, booklist_name, updated_books):
+    if not update_books(username, booklist_name, json.dumps(books)):
         return add_cors_headers({
             'statusCode': 400,
             'body': json.dumps('Error updating booklist')
         })
 
-    item['books']['S'] = books  # Actualizar libros en el item original para el response
+    item['books']['S'] = books 
     return add_cors_headers({
         'statusCode': 200,
-        'body': json.dumps(clean_dynamodb_item(item))
+        'body': item
     })
 
 
@@ -68,6 +67,18 @@ def get_booklist(username, booklist_name):
         }
     )
     return response.get('Item')
+
+
+def get_book_data(book_id):
+    """Obtiene la image_url de un libro desde la tabla Books."""
+    response = dynamodb_client.get_item(
+        TableName='Books',
+        Key={
+            'id': {'S': book_id}
+        },
+        ProjectionExpression='id,title,image_url'
+    )
+    return clean_dynamodb_item(response['Item'])
 
 
 def parse_books(books_str):
@@ -94,6 +105,6 @@ def update_books(username, booklist_name, books_json):
 
 # event = {
 #     'pathParameters': {'username': 'gabitest', 'booklist': 'Leidos'},
-#     'body': '{"id":"5e0dd8d1-4b54-4297-b6fe-488be3f481e3"}'
+#     'body': '{"id":"622bf611-4355-446d-a102-548642b3cfc3"}'
 # }
 # print(lambda_handler(event, None))
