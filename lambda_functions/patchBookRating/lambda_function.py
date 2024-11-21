@@ -27,7 +27,7 @@ def get_book_rating(book_id):
     try:
         average_rating = float(book['average_rating']['N'])
         ratings_count = int(book['ratings_count']['N'])
-        ratings_sum = int(book['ratings_sum']['N']) if 'ratings_sum' in book else average_rating * ratings_count
+        ratings_sum = int(book['ratings_sum']['N']) if 'ratings_sum' in book else round(average_rating * ratings_count)
         return ratings_count, ratings_sum
     except Exception as e:
         print(e, file=sys.stderr)
