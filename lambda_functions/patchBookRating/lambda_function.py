@@ -19,7 +19,7 @@ def get_book_rating(book_id):
         )
     except Exception as e:
         print(e, file=sys.stderr)
-        raise HTTPError(400, 'Failed to query DB')
+        raise HTTPError(500, 'Failed to query DB')
     try:
         book = response['Item']
     except:
@@ -55,7 +55,7 @@ def rate_book(book_id, user_rating):
         )['Attributes']
     except Exception as e:
         print(e, file=sys.stderr)
-        raise HTTPError(400, 'Failed to write changes to DB')
+        raise HTTPError(500, 'Failed to write changes to DB')
     book = {
         'id': response['id']['S'],
         'isbn': response['isbn']['S'],
@@ -114,3 +114,15 @@ def lambda_handler(event, _context):
                 'Access-Control-Allow-Methods': 'OPTIONS, PATCH'
             }
         }
+    except Exception as e:
+        print(e, file=sys.stderr)
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error_message': 'Unhandled exception'}),
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS, PATCH'
+            }
+        }
+
