@@ -1,3 +1,4 @@
+import sys
 import json
 import boto3
 
@@ -10,11 +11,15 @@ dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
 
 def get_book_rating(book_id):
-    response = dynamodb_client.get_item(
-        TableName='Books',
-        Key={'id': {'S': book_id}},
-        ProjectionExpression='average_rating, ratings_count, ratings_sum'
-    )
+    try:
+        response = dynamodb_client.get_item(
+            TableName='Books',
+            Key={'id': {'S': book_id}},
+            ProjectionExpression='average_rating, ratings_count, ratings_sum'
+        )
+    except Exception as e:
+        print(e, file=sys.stderr)
+        raise HTTPError(400, 'Failed to query DB')
     try:
         book = response['Item']
     except:
@@ -24,7 +29,8 @@ def get_book_rating(book_id):
         ratings_count = int(book['ratings_count']['N'])
         ratings_sum = int(book['ratings_sum']['N']) if 'ratings_sum' in book else average_rating * ratings_count
         return ratings_count, ratings_sum
-    except:
+    except Exception as e:
+        print(e, file=sys.stderr)
         raise HTTPError(500, 'error retrieving book details')
 
 
@@ -32,7 +38,7 @@ def rate_book(book_id, user_rating):
     ratings_count, ratings_sum = get_book_rating(book_id)
     ratings_count += 1
     ratings_sum += user_rating
-    average_rating = round(ratings_sum / ratings_count, 1)
+    average_rating = round(ratings_sum / ratings_count, 2)
 
     # Save new rating to DB
     try:
@@ -47,7 +53,8 @@ def rate_book(book_id, user_rating):
             },
             ReturnValues="ALL_NEW" # devuelve cómo quedó.
         )['Attributes']
-    except:
+    except Exception as e:
+        print(e, file=sys.stderr)
         raise HTTPError(400, 'Failed to write changes to DB')
     book = {
         'id': response['id']['S'],
@@ -70,10 +77,13 @@ def parse_input(event):
         raise HTTPError(400, 'book_id query parameter not provided')
     try:
         body = json.loads(event['body'])
-    except:
+    except Exception as e:
+        print(e, file=sys.stderr)
         raise HTTPError(400, 'request body is not valid json')
     try:
         user_rating = body['user_rating']
+        if not 1 <= user_rating <= 5:
+            raise HTTPError(400, 'Rating must be a number between 1 and 5.')
     except KeyError:
         raise HTTPError(400, 'user_rating body parameter not provided')
     return book_id, user_rating
