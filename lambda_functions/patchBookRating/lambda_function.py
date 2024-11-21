@@ -107,5 +107,10 @@ def lambda_handler(event, _context):
     except HTTPError as e:
         return {
             'statusCode': e.status_code,
-            'body': json.dumps({'error_message': e.error_message})
+            'body': json.dumps({'error_message': e.error_message}),
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS, PATCH'
+            }
         }
