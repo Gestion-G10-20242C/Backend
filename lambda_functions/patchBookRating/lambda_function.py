@@ -96,7 +96,7 @@ def lambda_handler(event, _context):
         book = rate_book(book_id, user_rating)
         response = {
             'statusCode': 200,
-            'body': book,
+            'body': json.dumps(book),
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': 'Content-Type',
