@@ -1,4 +1,5 @@
 import ast
+from urllib.parse import unquote
 from boto3.dynamodb.conditions import Attr
 import boto3
 import json
@@ -21,8 +22,9 @@ def add_cors_headers(response):
 
 
 def lambda_handler(event, context):
+    print(event.get('pathParameters', {}))
     username = event['pathParameters']['username']
-    booklist_name = event['pathParameters']['booklist']
+    booklist_name = unquote(event['pathParameters']['booklist'])
     body = json.loads(event['body'])
 
     # Obtener el item de DynamoDB
@@ -53,7 +55,7 @@ def lambda_handler(event, context):
     item['books']['S'] = books 
     return add_cors_headers({
         'statusCode': 200,
-        'body': item
+        'body': json.dumps(item)
     })
 
 
@@ -104,7 +106,7 @@ def update_books(username, booklist_name, books_json):
 
 
 # event = {
-#     'pathParameters': {'username': 'gabitest', 'booklist': 'Leidos'},
+#     'pathParameters': {'username': 'gabitest', 'booklist': 'Próximos'},
 #     'body': '{"id":"622bf611-4355-446d-a102-548642b3cfc3"}'
 # }
 # print(lambda_handler(event, None))

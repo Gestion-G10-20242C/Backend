@@ -1,4 +1,5 @@
 import ast
+from urllib.parse import unquote
 from boto3.dynamodb.conditions import Attr
 import boto3
 import json
@@ -57,7 +58,7 @@ def update_books(username, booklist_name, books_json):
 
 def lambda_handler(event, context):
     username = event['pathParameters']['username']
-    booklist_name = event['pathParameters']['booklist']
+    booklist_name = unquote(event['pathParameters']['booklist'])
     body = json.loads(event['body'])
 
     # Obtener el item de DynamoDB
