@@ -1,97 +1,116 @@
+import sys
 import json
 import boto3
 
+class HTTPError(Exception):
+    def __init__(self, status_code, error_message):
+        self.status_code = status_code
+        self.error_message = error_message
+
 dynamodb_client = boto3.client('dynamodb', region_name='us-east-1')
 
-def deserialize_book(book):
-    return{
-            'book_id': int(book['id']['N']),
-            'average_rating': float(book['average_rating']['N']),
-            'ratings_count': int(book['ratings_count']['N']),
+
+def get_book_rating(book_id):
+    try:
+        response = dynamodb_client.get_item(
+            TableName='Books',
+            Key={'id': {'S': book_id}},
+            ProjectionExpression='average_rating, ratings_count, ratings_sum'
+        )
+    except Exception as e:
+        print(e, file=sys.stderr)
+        raise HTTPError(400, 'Failed to query DB')
+    try:
+        book = response['Item']
+    except:
+        raise HTTPError(404, 'no book found for that book_id')
+    try:
+        average_rating = float(book['average_rating']['N'])
+        ratings_count = int(book['ratings_count']['N'])
+        ratings_sum = int(book['ratings_sum']['N']) if 'ratings_sum' in book else round(average_rating * ratings_count)
+        return ratings_count, ratings_sum
+    except Exception as e:
+        print(e, file=sys.stderr)
+        raise HTTPError(500, 'error retrieving book details')
+
+
+def rate_book(book_id, user_rating):
+    ratings_count, ratings_sum = get_book_rating(book_id)
+    ratings_count += 1
+    ratings_sum += user_rating
+    average_rating = round(ratings_sum / ratings_count, 2)
+
+    # Save new rating to DB
+    try:
+        response = dynamodb_client.update_item(
+            TableName='Books',
+            Key={'id': {'S': book_id}},
+            UpdateExpression='SET average_rating = :new_avg, ratings_count = :new_count, ratings_sum = :new_sum',
+            ExpressionAttributeValues={
+                ':new_avg': {'N': str(average_rating)},
+                ':new_count': {'N': str(ratings_count)},
+                ':new_sum': {'N': str(ratings_sum)}
+            },
+            ReturnValues="ALL_NEW" # devuelve cómo quedó.
+        )['Attributes']
+    except Exception as e:
+        print(e, file=sys.stderr)
+        raise HTTPError(400, 'Failed to write changes to DB')
+    book = {
+        'id': response['id']['S'],
+        'isbn': response['isbn']['S'],
+        'average_rating': float(response['average_rating']['N']),
+        'publication_date': response['publication_date']['S'],
+        'text_reviews_count': int(response['text_reviews_count']['N']),
+        'image_url': response['image_url']['S'],
+        'author_name': response['author_name']['S'],
+        'title': response['title']['S'],
+        'genres': response['genres']['S'],
     }
+    return book
 
-def rate_book(book_id, user_rate):
-    # Get book_id
-    response = dynamodb_client.get_item(
-        TableName='Books',
-        Key={'id': {'S': book_id}},
-        ProjectionExpression='id, average_rating, ratings_count'
-    )
 
-    # camino feliz, response dio ok
-    book = deserialize_book(response)
-    # New avg _ ((avg*count) + user_rate)/ (count+1)
-    new_sum = book['average_rating']*book['ratings_count'] + user_rate
-    new_rate_count = book['ratings_count'] + 1
-    new_avg_rate = new_sum/new_rate_count
+def parse_input(event):
+    try:
+        book_id = event['pathParameters']['book_id']
+    except KeyError:
+        raise HTTPError(400, 'book_id query parameter not provided')
+    try:
+        body = json.loads(event['body'])
+    except Exception as e:
+        print(e, file=sys.stderr)
+        raise HTTPError(400, 'request body is not valid json')
+    try:
+        user_rating = body['user_rating']
+        if not 1 <= user_rating <= 5:
+            raise HTTPError(400, 'Rating must be a number between 1 and 5.')
+    except KeyError:
+        raise HTTPError(400, 'user_rating body parameter not provided')
+    return book_id, user_rating
 
-    # Update book avg on db
-    response = dynamodb_client.update_item(
-        TableName='Books',
-        Key={'id': {'S': book_id}},
-        UpdateExpression='SET average_rating = :new_avg, ratings_count = :new_count',
-        ExpressionAttributeValues={
-            ':new_avg': {'N': str(new_avg_rate)},
-            ':new_count': {'N': str(new_rate_count)}
-        },
-        ReturnValues="UPDATED_NEW" # devuelve cómo quedó.
-    )
 
-    # camino feliz, dio ok    
-    print(response)
-    
-    return response
-
-def review_book(book_id, user_rate):
-    ### ToDo.
-    # Get book_id
-    response = {}
-    
-    return response
-
-def lambda_handler(event, context):
+def lambda_handler(event, _context):
     print(event) # debug
-    book_id = event['pathParameters']['book_id']    
-    body = json.loads(event['body'])
-    user_rate = body.get('user_rate')
-    user_review = body.get('user_review')
-
-    if user_rate:
-        print(f"User submits to book rate {user_rate}")
-        response = rate_book(book_id, user_rate)
-
-    if user_review:
-        print(f"User submits to book review {user_review}")
-        response = {} #toDo
-
-
-    # Verificación del estado de la respuesta
-    status_code = response['ResponseMetadata']['HTTPStatusCode']
-    if status_code != 200:
-        return {
-            'statusCode': 400,
-            'body': json.dumps('Error')
+    try:
+        book_id, user_rating = parse_input(event)
+        book = rate_book(book_id, user_rating)
+        response = {
+            'statusCode': 200,
+            'body': book,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS, PATCH'
+            }
         }
-    
-    if 'Items' not in response:
+        return response
+    except HTTPError as e:
         return {
-            'statusCode': 404,
-            'body': json.dumps('Error: No books found')
+            'statusCode': e.status_code,
+            'body': json.dumps({'error_message': e.error_message}),
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS, PATCH'
+            }
         }
-    
-    
-    
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'OPTIONS, PATCH'
-        },
-        'body': json.dumps(response)
-    }
-
-###
-# For local testing:
-#event = {}
-#print("Response:", lambda_handler(event, {}))
