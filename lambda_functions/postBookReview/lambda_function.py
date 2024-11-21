@@ -147,5 +147,3 @@ def lambda_handler(event, _context):
                 'Access-Control-Allow-Methods': 'OPTIONS, POST'
             }
         }
-
-
