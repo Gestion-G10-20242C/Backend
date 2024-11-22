@@ -40,8 +40,9 @@ def add_review_to_book(book_id, user_id, given_name, profile_picture, user_revie
         response = dynamodb_client.update_item(
             TableName='Books',
             Key={'id': {'S': book_id}},
-            UpdateExpression='ADD reviews :new_reviews',
+            UpdateExpression='SET reviews = list_append(if_not_exists(reviews, :empty_list), :new_reviews)',
             ExpressionAttributeValues={
+                ':empty_list': {'L': []},
                 ':new_reviews': { 'L': [{
                     "M": {
                         "user_id": {"S": user_id},
@@ -85,8 +86,9 @@ def add_review_to_user(book_id, user_id, user_review):
         dynamodb_client.update_item(
             TableName='UserProfiles',
             Key={'username': {'S': user_id}},
-            UpdateExpression='ADD reviews :new_reviews',
+            UpdateExpression='SET reviews = list_append(if_not_exists(reviews, :empty_list), :new_reviews)',
             ExpressionAttributeValues={
+                ':empty_list': {'L': []},
                 ':new_reviews': { 'L': [{
                     "M": {
                         "book_id": {"S": book_id},
