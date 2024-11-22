@@ -74,7 +74,7 @@ def parse_input(event):
     try:
         book_id = event['pathParameters']['book_id']
     except KeyError:
-        raise HTTPError(400, 'book_id query parameter not provided')
+        raise HTTPError(400, 'book_id path parameter not provided')
     try:
         body = json.loads(event['body'])
     except Exception as e:
