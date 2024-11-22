@@ -26,8 +26,8 @@ def get_user_details(user_id):
     except:
         raise HTTPError(404, 'no user found for that user ID')
     try:
-        given_name = float(user['name']['S'])
-        profile_picture = int(user['profilePicture']['S'])
+        given_name = user['name']['S']
+        profile_picture = user['profilePicture']['S']
         return given_name, profile_picture
     except Exception as e:
         print(e, file=sys.stderr)
@@ -66,7 +66,15 @@ def add_review_to_book(book_id, user_id, given_name, profile_picture, user_revie
         'author_name': response['author_name']['S'],
         'title': response['title']['S'],
         'genres': response['genres']['S'],
-        'reviews': [{'user_id': review['M']['user_id']['S'], 'review': review['M']['review']['S']} for review in response['reviews']['L']],
+        'reviews': [
+            {
+                'username': review['M']['user_id']['S'],
+                'name': review['M']['user_name']['S'],
+                'profilePicture': review['M']['profilePicture']['S'],
+                'review': review['M']['review']['S']
+            }
+            for review in response['reviews']['L']
+        ],
     }
     return book
 
