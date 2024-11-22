@@ -34,13 +34,31 @@ def get_book_rating(book_id):
         raise HTTPError(500, 'error retrieving book details')
 
 
-def rate_book(book_id, user_rating):
-    ratings_count, ratings_sum = get_book_rating(book_id)
-    ratings_count += 1
-    ratings_sum += user_rating
-    average_rating = round(ratings_sum / ratings_count, 2)
+def overwrite_previous_rating(username, book_id, user_rating):
+    try:
+        response = dynamodb_client.update_item(
+            TableName='Ratings',
+            Key={'id': {'S': f'{username}:{book_id}'}},
+            UpdateExpression='SET rating = :new_rating',
+            ExpressionAttributeValues={
+                ':new_rating': {'S': user_rating}
+            },
+            ReturnValues="UPDATED_OLD" # devuelve el puntaje anterior
+        )['Attributes']
+    except Exception as e:
+        print(e, file=sys.stderr)
+        raise HTTPError(500, 'Failed to write changes to Ratings DB')
+    return response['rating']
 
-    # Save new rating to DB
+
+def update_book_avg_rating(book_id, user_rating, previous_rating):
+    ratings_count, ratings_sum = get_book_rating(book_id)
+    if previous_rating:
+        ratings_sum += user_rating - previous_rating
+    else:
+        ratings_count += 1
+        ratings_sum += user_rating
+    average_rating = round(ratings_sum / ratings_count, 2)
     try:
         response = dynamodb_client.update_item(
             TableName='Books',
@@ -81,18 +99,20 @@ def parse_input(event):
         raise HTTPError(400, 'request body is not valid json')
     try:
         user_rating = body['user_rating']
+        username = body['username']
         if not 1 <= user_rating <= 5:
             raise HTTPError(400, 'Rating must be a number between 1 and 5.')
     except KeyError:
-        raise HTTPError(400, 'user_rating body parameter not provided')
-    return book_id, user_rating
+        raise HTTPError(400, 'username or user_rating body parameter not provided')
+    return book_id, username, user_rating
 
 
 def lambda_handler(event, _context):
     print(event) # debug
     try:
-        book_id, user_rating = parse_input(event)
-        book = rate_book(book_id, user_rating)
+        book_id, username, user_rating = parse_input(event)    
+        previous_rating = overwrite_previous_rating(username, book_id, user_rating)
+        book = update_book_avg_rating(book_id, user_rating, previous_rating)
         response = {
             'statusCode': 200,
             'body': json.dumps(book),
