@@ -96,7 +96,7 @@ def add_review_to_user(book_id, user_id, user_review):
                 }]}
             },
             ReturnValues="NONE"
-        )['Attributes']
+        )
     except Exception as e:
         print(e, file=sys.stderr)
         raise HTTPError(500, 'Failed to write changes to DB')
@@ -147,7 +147,6 @@ def lambda_handler(event, _context):
                 'Access-Control-Allow-Methods': 'OPTIONS, POST'
             }
         }
-    """
     except Exception as e:
         print(e, file=sys.stderr)
         return {
@@ -159,4 +158,3 @@ def lambda_handler(event, _context):
                 'Access-Control-Allow-Methods': 'OPTIONS, POST'
             }
         }
-    """
