@@ -148,6 +148,7 @@ def lambda_handler(event, _context):
                 'Access-Control-Allow-Methods': 'OPTIONS, POST'
             }
         }
+    """
     except Exception as e:
         print(e, file=sys.stderr)
         return {
@@ -159,3 +160,4 @@ def lambda_handler(event, _context):
                 'Access-Control-Allow-Methods': 'OPTIONS, POST'
             }
         }
+    """
