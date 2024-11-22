@@ -1,7 +1,14 @@
 import sys
 import json
 import boto3
+import decimal
 from boto3.dynamodb.types import TypeDeserializer, TypeSerializer
+
+class DecimalEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, decimal.Decimal):
+            return str(o)
+        return super().default(o)
 
 class HTTPError(Exception):
     def __init__(self, status_code, error_message):
@@ -60,7 +67,7 @@ def add_review_to_book(book_id, user_id, given_name, profile_picture, user_revie
     except Exception as e:
         print(e, file=sys.stderr)
         raise HTTPError(500, 'Failed to write changes to DB')
-    book = TypeDeserializer().deserialize(response)
+    book = TypeDeserializer().deserialize({'M': response})
     book = {
         'id': book['id'],
         'average_rating': book['average_rating'],
@@ -125,7 +132,7 @@ def lambda_handler(event, _context):
         add_review_to_user(book_id, user_id, user_review)
         response = {
             'statusCode': 200,
-            'body': json.dumps(book),
+            'body': json.dumps(book, cls=DecimalEncoder),
             'headers': {
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': 'Content-Type',
