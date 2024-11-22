@@ -47,7 +47,7 @@ def add_review_to_book(book_id, user_id, given_name, profile_picture, user_revie
                     "M": {
                         "user_id": {"S": user_id},
                         "user_name": {"S": given_name},
-                        "profilePicture:": {"S": profile_picture},
+                        "profilePicture": {"S": profile_picture},
                         "review:": {"S": user_review},    
                     }
                 }]}
