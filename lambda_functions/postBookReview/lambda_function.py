@@ -1,6 +1,7 @@
 import sys
 import json
 import boto3
+from boto3.dynamodb.types import TypeDeserializer, TypeSerializer
 
 class HTTPError(Exception):
     def __init__(self, status_code, error_message):
@@ -14,7 +15,7 @@ def get_user_details(user_id):
     try:
         response = dynamodb_client.get_item(
             TableName='UserProfiles',
-            Key={'username': {'S': user_id}},
+            Key={'username': TypeSerializer().serialize(user_id)},
             ProjectionExpression='#nameAlias, profilePicture',
             ExpressionAttributeNames={'#nameAlias': 'name'}
         )
@@ -26,8 +27,9 @@ def get_user_details(user_id):
     except:
         raise HTTPError(404, 'no user found for that user ID')
     try:
-        given_name = user['name']['S']
-        profile_picture = user['profilePicture']['S']
+        deser = TypeDeserializer()
+        given_name = deser.deserialize(user['name'])
+        profile_picture = deser.deserialize(user['profilePicture'])
         return given_name, profile_picture
     except Exception as e:
         print(e, file=sys.stderr)
@@ -37,44 +39,37 @@ def get_user_details(user_id):
 def add_review_to_book(book_id, user_id, given_name, profile_picture, user_review):
     # Save new review to DB
     try:
+        ser = TypeSerializer()
         response = dynamodb_client.update_item(
             TableName='Books',
-            Key={'id': {'S': book_id}},
+            Key={'id': ser.serialize(book_id)},
             UpdateExpression='SET reviews = list_append(if_not_exists(reviews, :empty_list), :new_reviews)',
             ExpressionAttributeValues={
-                ':empty_list': {'L': []},
-                ':new_reviews': { 'L': [{
-                    "M": {
-                        "user_id": {"S": user_id},
-                        "user_name": {"S": given_name},
-                        "profilePicture": {"S": profile_picture},
-                        "review": {"S": user_review},    
+                ':empty_list': ser.serialize([]),
+                ':new_reviews': ser.serialize([
+                    {
+                        "username": user_id,
+                        "name": given_name,
+                        "profilePicture": profile_picture,
+                        "review": user_review,
                     }
-                }]}
+                ])
             },
             ReturnValues="ALL_NEW" # devuelve cómo quedó.
         )['Attributes']
     except Exception as e:
         print(e, file=sys.stderr)
         raise HTTPError(500, 'Failed to write changes to DB')
+    book = TypeDeserializer().deserialize(response)
     book = {
-        'id': response['id']['S'],
-        'isbn': response['isbn']['S'],
-        'average_rating': float(response['average_rating']['N']),
-        'publication_date': response['publication_date']['S'],
-        'image_url': response['image_url']['S'],
-        'author_name': response['author_name']['S'],
-        'title': response['title']['S'],
-        'genres': response['genres']['S'],
-        'reviews': [
-            {
-                'username': review['M']['user_id']['S'],
-                'name': review['M']['user_name']['S'],
-                'profilePicture': review['M']['profilePicture']['S'],
-                'review': review['M']['review']['S']
-            }
-            for review in response['reviews']['L']
-        ],
+        'id': book['id'],
+        'average_rating': book['average_rating'],
+        'publication_date': book['publication_date'],
+        'image_url': book['image_url'],
+        'author_name': book['author_name'],
+        'title': book['title'],
+        'genres': book['genres'],
+        'reviews': book['reviews']
     }
     return book
 
@@ -82,18 +77,19 @@ def add_review_to_book(book_id, user_id, given_name, profile_picture, user_revie
 def add_review_to_user(book_id, user_id, user_review):
     # Save new review to DB
     try:
+        ser = TypeSerializer()
         dynamodb_client.update_item(
             TableName='UserProfiles',
-            Key={'username': {'S': user_id}},
+            Key={'username': ser.serialize(user_id)},
             UpdateExpression='SET reviews = list_append(if_not_exists(reviews, :empty_list), :new_reviews)',
             ExpressionAttributeValues={
-                ':empty_list': {'L': []},
-                ':new_reviews': { 'L': [{
-                    "M": {
-                        "book_id": {"S": book_id},
-                        "review:": {"S": user_review},    
+                ':empty_list': ser.serialize([]),
+                ':new_reviews': ser.serialize([
+                    {
+                        "book_id": book_id,
+                        "review:": user_review,    
                     }
-                }]}
+                ])
             },
             ReturnValues="NONE"
         )
