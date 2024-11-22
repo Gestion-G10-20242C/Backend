@@ -15,7 +15,7 @@ def get_user_details(user_id):
         response = dynamodb_client.get_item(
             TableName='UserProfiles',
             Key={'username': {'S': user_id}},
-            ProjectionExpression='name, #nameAlias',
+            ProjectionExpression='#nameAlias, profilePicture',
             ExpressionAttributeNames={'#nameAlias': 'name'}
         )
     except Exception as e:
