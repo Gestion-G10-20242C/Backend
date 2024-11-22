@@ -35,20 +35,16 @@ def get_book_rating(book_id):
 
 
 def overwrite_previous_rating(username, book_id, user_rating):
-    try:
-        response = dynamodb_client.update_item(
-            TableName='Ratings',
-            Key={'id': {'S': f'{username}:{book_id}'}},
-            UpdateExpression='SET rating = :new_rating',
-            ExpressionAttributeValues={
-                ':new_rating': {'S': user_rating}
-            },
-            ReturnValues="UPDATED_OLD" # devuelve el puntaje anterior
-        )['Attributes']
-    except Exception as e:
-        print(e, file=sys.stderr)
-        raise HTTPError(500, 'Failed to write changes to Ratings DB')
-    return response['rating']
+    response = dynamodb_client.update_item(
+        TableName='Ratings',
+        Key={'id': {'S': f'{username}:{book_id}'}},
+        UpdateExpression='SET rating = :new_rating',
+        ExpressionAttributeValues={
+            ':new_rating': {'N': str(user_rating)}
+        },
+        ReturnValues="UPDATED_OLD" # devuelve el puntaje anterior
+    )
+    return int(response['Attributes']['rating']['N']) if 'Attributes' in response else None
 
 
 def update_book_avg_rating(book_id, user_rating, previous_rating):
@@ -59,21 +55,17 @@ def update_book_avg_rating(book_id, user_rating, previous_rating):
         ratings_count += 1
         ratings_sum += user_rating
     average_rating = round(ratings_sum / ratings_count, 2)
-    try:
-        response = dynamodb_client.update_item(
-            TableName='Books',
-            Key={'id': {'S': book_id}},
-            UpdateExpression='SET average_rating = :new_avg, ratings_count = :new_count, ratings_sum = :new_sum',
-            ExpressionAttributeValues={
-                ':new_avg': {'N': str(average_rating)},
-                ':new_count': {'N': str(ratings_count)},
-                ':new_sum': {'N': str(ratings_sum)}
-            },
-            ReturnValues="ALL_NEW" # devuelve cómo quedó.
-        )['Attributes']
-    except Exception as e:
-        print(e, file=sys.stderr)
-        raise HTTPError(500, 'Failed to write changes to DB')
+    response = dynamodb_client.update_item(
+        TableName='Books',
+        Key={'id': {'S': book_id}},
+        UpdateExpression='SET average_rating = :new_avg, ratings_count = :new_count, ratings_sum = :new_sum',
+        ExpressionAttributeValues={
+            ':new_avg': {'N': str(average_rating)},
+            ':new_count': {'N': str(ratings_count)},
+            ':new_sum': {'N': str(ratings_sum)}
+        },
+        ReturnValues="ALL_NEW" # devuelve cómo quedó.
+    )['Attributes']
     book = {
         'id': response['id']['S'],
         'isbn': response['isbn']['S'],
@@ -108,7 +100,6 @@ def parse_input(event):
 
 
 def lambda_handler(event, _context):
-    print(event) # debug
     try:
         book_id, username, user_rating = parse_input(event)    
         previous_rating = overwrite_previous_rating(username, book_id, user_rating)
@@ -133,15 +124,3 @@ def lambda_handler(event, _context):
                 'Access-Control-Allow-Methods': 'OPTIONS, PATCH'
             }
         }
-    except Exception as e:
-        print(e, file=sys.stderr)
-        return {
-            'statusCode': 500,
-            'body': json.dumps({'error_message': 'Unhandled exception'}),
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Headers': 'Content-Type',
-                'Access-Control-Allow-Methods': 'OPTIONS, PATCH'
-            }
-        }
-
