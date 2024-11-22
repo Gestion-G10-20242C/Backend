@@ -46,7 +46,7 @@ def add_review_to_book(book_id, user_id, given_name, profile_picture, user_revie
                 ':new_reviews': { 'L': [{
                     "M": {
                         "user_id": {"S": user_id},
-                        "user_name:": {"S": given_name},
+                        "user_name": {"S": given_name},
                         "profilePicture:": {"S": profile_picture},
                         "review:": {"S": user_review},    
                     }
@@ -62,7 +62,6 @@ def add_review_to_book(book_id, user_id, given_name, profile_picture, user_revie
         'isbn': response['isbn']['S'],
         'average_rating': float(response['average_rating']['N']),
         'publication_date': response['publication_date']['S'],
-        'text_reviews_count': int(response['text_reviews_count']['N']),
         'image_url': response['image_url']['S'],
         'author_name': response['author_name']['S'],
         'title': response['title']['S'],
