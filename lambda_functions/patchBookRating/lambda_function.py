@@ -61,7 +61,6 @@ def rate_book(book_id, user_rating):
         'isbn': response['isbn']['S'],
         'average_rating': float(response['average_rating']['N']),
         'publication_date': response['publication_date']['S'],
-        'text_reviews_count': int(response['text_reviews_count']['N']),
         'image_url': response['image_url']['S'],
         'author_name': response['author_name']['S'],
         'title': response['title']['S'],
