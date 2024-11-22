@@ -40,7 +40,7 @@ def add_review_to_book(book_id, user_id, given_name, profile_picture, user_revie
         response = dynamodb_client.update_item(
             TableName='Books',
             Key={'id': {'S': book_id}},
-            UpdateExpression='ADD reviews + :new_reviews',
+            UpdateExpression='ADD reviews :new_reviews',
             ExpressionAttributeValues={
                 ':new_reviews': { 'L': [{
                     "M": {
@@ -85,7 +85,7 @@ def add_review_to_user(book_id, user_id, user_review):
         dynamodb_client.update_item(
             TableName='UserProfiles',
             Key={'username': {'S': user_id}},
-            UpdateExpression='ADD reviews + :new_reviews',
+            UpdateExpression='ADD reviews :new_reviews',
             ExpressionAttributeValues={
                 ':new_reviews': { 'L': [{
                     "M": {
