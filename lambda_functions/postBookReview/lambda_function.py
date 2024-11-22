@@ -103,10 +103,11 @@ def parse_input(event):
         print(e, file=sys.stderr)
         raise HTTPError(400, 'request body is not valid json')
     try:
+        user_id = body['user_id']
         user_review = body['user_review']
     except KeyError:
-        raise HTTPError(400, 'user_review body parameter not provided')
-    return book_id, user_review
+        raise HTTPError(400, 'user_id or user_review body parameter not provided')
+    return book_id, user_id, user_review
 
 
 def lambda_handler(event, _context):
