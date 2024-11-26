@@ -56,7 +56,7 @@ def search_books_by(field, query):
       ExpressionAttributeValues={
         ':query': {'S': query}
     },
-    ProjectionExpression="id, image_url, title, author_name, genres, average_rating, publication_date, reviews"
+    ProjectionExpression="id, image_url, title, author_name, genres, average_rating, publication_date, reviews, isbn"
     )
     return response
 
