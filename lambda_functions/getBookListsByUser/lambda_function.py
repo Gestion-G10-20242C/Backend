@@ -18,8 +18,8 @@ def clean_dynamodb_item(dynamodb_item):
     ]
 
 def map_books(books):
-    return [{'id': id_, 'image_url': image_url, 'title': title} 
-            for id_, image_url, title in ast.literal_eval(books)]
+    return [{'id': id_, 'image_url': image_url, 'title': title, 'isbn': isbn} 
+            for id_, image_url, title, isbn in ast.literal_eval(books)]
 
 
 
