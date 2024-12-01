@@ -21,18 +21,18 @@ SYSTEM_PROMPT = {
 Responde manteniendo tu personalidad y contexto a lo largo de la conversación. Comparte anécdotas y perspectivas que reflejen tu carácter y vivencias imaginadas, siempre siendo coherente y evitando contradicciones. Involúcrate en la conversación con interés genuino, como lo haría un personaje bien desarrollado en {book_name}."""
 }
 
-def build_system_message(event):
-    """Construye un mensaje de sistema basado en el evento."""
-    if not 'role' in event:
-        raise ValueError("El evento no tiene un rol.")
+def build_system_message(body):
+    """Construye un mensaje de sistema basado en el body."""
+    if not 'role' in body:
+        raise ValueError("El body no tiene un rol.")
     
 
     
-    base_prompt = SYSTEM_PROMPT.get(event['role'], "")
-    if event['role'] == 'author':
-        base_prompt = base_prompt.format(name=event.get('name'))
-    if event['role'] == 'char':
-        base_prompt = base_prompt.format(name=event.get('name'),book_name=event.get('book_name'))
+    base_prompt = SYSTEM_PROMPT.get(body['role'], "")
+    if body['role'] == 'author':
+        base_prompt = base_prompt.format(name=body.get('name'))
+    if body['role'] == 'char':
+        base_prompt = base_prompt.format(name=body.get('name'),book_name=body.get('book_name'))
 
     return base_prompt
 
