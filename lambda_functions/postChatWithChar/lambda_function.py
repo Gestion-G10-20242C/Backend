@@ -61,50 +61,47 @@ def lambda_handler(event, context):
     chat_id = pathParameters.get('chat_id')
     user_message = body['message']
 
-    # try:
-    if chat_id:
-        history = get_chat_history(user_id, chat_id)
-        messages = history + [{"role": "user", "content": user_message}]
-    else:
-        chat_id = f"{datetime.now().timestamp()*MILIS:.0f}"
-        messages = [{"role": "system", "content": build_system_message(body)},
-                    {"role": "user", "content": user_message}]
+    try:
+        if chat_id:
+            history = get_chat_history(user_id, chat_id)
+            messages = history + [{"role": "user", "content": user_message}]
+        else:
+            chat_id = f"{datetime.now().timestamp()*MILIS:.0f}"
+            messages = [{"role": "system", "content": build_system_message(body)},
+                        {"role": "user", "content": user_message}]
 
-    model_response = send_request_to_openai(messages)
-    messages.append({"role": "assistant", "content": model_response})
+        model_response = send_request_to_openai(messages)
+        messages.append({"role": "assistant", "content": model_response})
 
-    save_chat_history(user_id, chat_id, messages)
+        save_chat_history(user_id, chat_id, messages)
 
-    return {
-        "statusCode": 200,
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Methods': 'OPTIONS, POST'
-        },
-        "body": json.dumps({
-            "chat_id": chat_id,
-            "response": model_response
-        })
-    }
-    # except Exception as e:
-    #     return {
-    #         "statusCode": 500,
-    #         "body": f"Error: {str(e)}"
-    #     }
+        return {
+            "statusCode": 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Allow-Methods': 'OPTIONS, POST'
+            },
+            "body": json.dumps({
+                "chat_id": chat_id,
+                "response": model_response
+            })
+        }
+    except Exception as e:
+        return {
+            "statusCode": 500,
+            "body": f"Error: {str(e)}"
+        }
 
 
-event = {
-    "body":'{"message": "Cuál es el personaje que más lo ama?","role": "author","name": "J.K. Rowling"}',
-    'pathParameters': {
-        'username': 'gabitest',
-        'chat_id': '1733011669194'
-    }
-}
+# event = {
+#     "body":'{"message": "Cuál es el personaje que más lo ama?","role": "author","name": "J.K. Rowling"}',
+#     'pathParameters': {
+#         'username': 'gabitest',
+#         'chat_id': '1733011669194'
+#     }
+# }
 
 # event = {
 #     "body":'{"message": "¿Cuál es tu libro favorito?","role": "char","name": "Hermione Granger","book_name": "Harry Potter y la piedra filosofal"}'
 # }
-
-
-print(lambda_handler(event, None))
