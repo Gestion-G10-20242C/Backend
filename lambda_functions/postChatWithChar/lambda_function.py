@@ -4,8 +4,6 @@ import os
 import boto3
 from datetime import datetime
 from system_prompt import build_system_message
-import dotenv
-dotenv.load_dotenv()
 
 MAX_MESSAGES = 8
 MILIS = 1000
